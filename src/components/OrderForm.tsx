@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import type { AppData, Order, OrderItem, OrderStatus } from '../types';
 import { useStore } from '../store';
-import { customers, nextOpenDay, nextOrderId, orderSubtotal, orderTotal, productMap } from '../lib/calc';
+import { activeCampaigns, customers, nextOpenDay, nextOrderId, orderSubtotal, orderTotal, productMap } from '../lib/calc';
 import { formatDate, formatRp, parseISO, todayISO, waLink } from '../lib/format';
 import { Field, Modal, MoneyInput, Qty, STATUS_META, Seg, Switch } from './UI';
 import { IconPlus, IconTrash, IconWA } from './Icons';
@@ -18,6 +18,32 @@ export function waMessage(data: AppData, o: Order): string {
     .replace(/\{fulfilment\}/g, o.fulfilment === 'delivery' ? 'Dikirim' : 'Pickup')
     .replace(/\{date\}/g, parseISO(o.date).toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long' }))
     .replace(/\{id\}/g, o.id);
+}
+
+function PriceChips({ item, date, onPick }: { item: OrderItem; date: string; onPick: (price: number) => void }) {
+  const { data } = useStore();
+  const p = data.products.find((x) => x.id === item.productId);
+  if (!p) return null;
+  const campaign = activeCampaigns(data, date)
+    .filter((c) => c.productId === p.id)
+    .map((c) => ({ label: c.name, price: c.promoPrice }));
+  if (!p.priceOptions.length && !campaign.length) return null;
+  const opts = [{ label: 'Normal', price: p.price }, ...campaign, ...p.priceOptions];
+  return (
+    <div className="row wrap" style={{ gap: 6 }}>
+      {opts.map((o) => (
+        <button
+          key={o.label + o.price}
+          type="button"
+          className={`chip ${item.unitPrice === o.price ? 'mint' : 'outline'}`}
+          style={{ cursor: 'pointer', height: 30 }}
+          onClick={() => onPick(o.price)}
+        >
+          {o.label} · {formatRp(o.price)}
+        </button>
+      ))}
+    </div>
+  );
 }
 
 export function OrderForm({ order, onClose, defaultDate }: { order?: Order; onClose: () => void; defaultDate?: string }) {
@@ -159,7 +185,8 @@ export function OrderForm({ order, onClose, defaultDate }: { order?: Order; onCl
             </button>
           </div>
           {o.items.map((it, i) => (
-            <div className="item-row" key={i}>
+            <div key={i} className="stack" style={{ gap: 6 }}>
+            <div className="item-row">
               <Field label="Product">
                 <select
                   className="input"
@@ -188,6 +215,8 @@ export function OrderForm({ order, onClose, defaultDate }: { order?: Order; onCl
               >
                 <IconTrash />
               </button>
+            </div>
+            <PriceChips item={it} date={o.date} onPick={(unitPrice) => setItem(i, { unitPrice })} />
             </div>
           ))}
           <div className="form-grid">

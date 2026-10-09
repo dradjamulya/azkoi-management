@@ -132,15 +132,15 @@ export function createSeed(): AppData {
         'Halo {buyer}! Makasih udah order AZKOI 🤎\n\n{items}\nTotal: {total}\n\n{fulfilment} {date}. Ditunggu ya!',
     },
     ingredients: [
-      { id: 'tea-fujian', name: 'Fujian Oolong Tea', unit: 'g', packSize: 125, packPrice: 38900, stock: null },
-      { id: 'creamer-max', name: 'Max Creamer', unit: 'g', packSize: 500, packPrice: 53900, stock: null },
-      { id: 'evap-sunbay', name: 'Sunbay Evaporated Milk', unit: 'g', packSize: 380, packPrice: 17500, stock: null },
-      { id: 'sugar-gulaku', name: 'Gulaku Premium', unit: 'g', packSize: 1000, packPrice: 17500, stock: null },
-      { id: 'water', name: 'Air mendidih', unit: 'ml', packSize: 1000, packPrice: 0, stock: null },
-      { id: 'bottle-250', name: 'Botol 250 ml', unit: 'pcs', packSize: 50, packPrice: 108000, stock: null },
-      { id: 'bottle-1l', name: 'Botol 1 Liter', unit: 'pcs', packSize: 40, packPrice: 113292, stock: null },
-      { id: 'sticker', name: 'Sticker label', unit: 'pcs', packSize: 1, packPrice: 640, stock: null },
-      { id: 'straw', name: 'Sedotan Triple Holes 21cm', unit: 'pcs', packSize: 250, packPrice: 75000, stock: null },
+      { id: 'tea-fujian', name: 'Fujian Oolong Tea', unit: 'g', packSize: 125, packPrice: 38900, stock: null, lowAt: 50 },
+      { id: 'creamer-max', name: 'Max Creamer', unit: 'g', packSize: 500, packPrice: 53900, stock: null, lowAt: 150 },
+      { id: 'evap-sunbay', name: 'Sunbay Evaporated Milk', unit: 'g', packSize: 380, packPrice: 17500, stock: null, lowAt: 150 },
+      { id: 'sugar-gulaku', name: 'Gulaku Premium', unit: 'g', packSize: 1000, packPrice: 17500, stock: null, lowAt: 200 },
+      { id: 'water', name: 'Air mendidih', unit: 'ml', packSize: 1000, packPrice: 0, stock: null, lowAt: null },
+      { id: 'bottle-250', name: 'Botol 250 ml', unit: 'pcs', packSize: 50, packPrice: 108000, stock: null, lowAt: 10 },
+      { id: 'bottle-1l', name: 'Botol 1 Liter', unit: 'pcs', packSize: 40, packPrice: 113292, stock: null, lowAt: 5 },
+      { id: 'sticker', name: 'Sticker label', unit: 'pcs', packSize: 1, packPrice: 640, stock: null, lowAt: 10 },
+      { id: 'straw', name: 'Sedotan Triple Holes 21cm', unit: 'pcs', packSize: 250, packPrice: 75000, stock: null, lowAt: 20 },
     ],
     recipes: [
       {
@@ -178,6 +178,7 @@ export function createSeed(): AppData {
         variant: 'Bare Sugar',
         sizeMl: 250,
         price: 21000,
+        priceOptions: [{ label: 'Promo / teman', price: 19000 }],
         recipeId: 'bare',
         recipeScale: 1,
         packaging: [
@@ -194,6 +195,7 @@ export function createSeed(): AppData {
         variant: 'Normal Sugar',
         sizeMl: 250,
         price: 21000,
+        priceOptions: [{ label: 'Promo / teman', price: 19000 }],
         recipeId: 'normal',
         recipeScale: 1,
         packaging: [
@@ -210,6 +212,7 @@ export function createSeed(): AppData {
         variant: 'Bare Sugar · 1 Liter',
         sizeMl: 1000,
         price: 77000,
+        priceOptions: [],
         recipeId: 'bare',
         recipeScale: 4,
         packaging: [
@@ -226,6 +229,7 @@ export function createSeed(): AppData {
         variant: 'Normal Sugar · 1 Liter',
         sizeMl: 1000,
         price: 77000,
+        priceOptions: [],
         recipeId: 'normal',
         recipeScale: 4,
         packaging: [
@@ -238,6 +242,7 @@ export function createSeed(): AppData {
     ],
     orders: seedOrders(),
     txns: seedTxns(),
+    campaigns: [],
     tasks: [
       { id: 'T-001', title: 'Plan IG content for this weekend', notes: 'Story menu + order rules, Thu–Sun.', tag: 'Content', due: '2026-10-09', status: 'todo', createdAt: NOW },
       { id: 'T-002', title: 'Restock Max Creamer', notes: '', tag: 'Restock', due: '', status: 'todo', createdAt: NOW },

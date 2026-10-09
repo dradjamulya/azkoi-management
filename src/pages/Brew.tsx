@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useStore } from '../store';
 import { useUI } from '../App';
-import { brewNeeds, ingredientMap, nextOpenDay, orderBottles, productBOM, productCost, productMap, unitCost } from '../lib/calc';
+import { brewNeeds, ingredientMap, isLow, nextOpenDay, orderBottles, productBOM, productCost, productMap, unitCost } from '../lib/calc';
 import { addDays, formatDate, formatNum, formatRp, relativeDay, todayISO } from '../lib/format';
 import { Empty, Field, ProductChip, Qty, STATUS_META, Seg, StatusChip } from '../components/UI';
 import { IconCopy, IconPlus } from '../components/Icons';
@@ -89,17 +89,6 @@ export function Brew() {
     toast(`${ids.length} order${ids.length > 1 ? 's' : ''} → Brewing`);
   };
 
-  const deductStock = () => {
-    if (!confirm('Subtract these ingredients from your stock?')) return;
-    update((d) => {
-      for (const ing of d.ingredients) {
-        const used = totals.get(ing.id);
-        if (used && ing.stock !== null) ing.stock = Math.max(0, ing.stock - used);
-      }
-      return d;
-    });
-    toast('Stock updated');
-  };
 
   const copySummary = async () => {
     const lines = [
@@ -180,13 +169,8 @@ export function Brew() {
           <div className="card-head">
             <div>
               <h2>Ingredients needed</h2>
-              <div className="sub">From your recipes in Menu & HPP</div>
+              <div className="sub">From your recipes · stock is only a warning, nothing is subtracted</div>
             </div>
-            {ingRows.some((r) => r.ing!.stock !== null) && (
-              <button className="btn sm" onClick={deductStock} disabled={!bottlesToMake}>
-                Use from stock
-              </button>
-            )}
           </div>
           {ingRows.length ? (
             <div className="table-wrap">
@@ -214,7 +198,15 @@ export function Brew() {
                           {formatNum(Math.ceil(qty))} {ing!.unit}
                         </td>
                         <td className="r num">
-                          {ing!.stock === null ? <span className="muted">—</span> : <span className={short ? 'chip rose' : ''}>{formatNum(ing!.stock)}</span>}
+                          {ing!.stock === null ? (
+                            <span className="muted">—</span>
+                          ) : short ? (
+                            <span className="chip rose" title="Stock is less than what this plan needs">{formatNum(ing!.stock)} · kurang</span>
+                          ) : isLow(ing!) ? (
+                            <span className="chip honey" title="At or below your warning level">{formatNum(ing!.stock)} · menipis</span>
+                          ) : (
+                            formatNum(ing!.stock)
+                          )}
                         </td>
                         <td className="r num">{formatRp(unitCost(ing!) * qty)}</td>
                       </tr>

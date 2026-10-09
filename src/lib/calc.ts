@@ -3,6 +3,9 @@ import { addDays, monthKey, todayISO } from './format';
 
 export const unitCost = (ing: Ingredient) => (ing.packSize > 0 ? ing.packPrice / ing.packSize : 0);
 
+/** Stock is tracked, has a warning level, and is at or below it. */
+export const isLow = (i: Ingredient) => i.stock !== null && i.lowAt !== null && i.stock <= i.lowAt;
+
 export function ingredientMap(data: AppData) {
   return new Map(data.ingredients.map((i) => [i.id, i]));
 }
@@ -218,4 +221,8 @@ export function brewNeeds(data: AppData, from: string, to: string) {
     }
   }
   return { orders, counts };
+}
+
+export function activeCampaigns(data: AppData, date: string) {
+  return data.campaigns.filter((c) => c.start <= date && c.end >= date);
 }

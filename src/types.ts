@@ -10,6 +10,8 @@ export interface Ingredient {
   packPrice: number;
   /** On-hand stock in `unit`. null = not tracked. */
   stock: number | null;
+  /** Warn when stock drops to this amount or below. null = no warning. */
+  lowAt: number | null;
 }
 
 export interface RecipeLine {
@@ -26,6 +28,11 @@ export interface Recipe {
   steps: string[];
 }
 
+export interface PriceOption {
+  label: string;
+  price: number;
+}
+
 export interface Product {
   id: string;
   code: string;
@@ -33,6 +40,8 @@ export interface Product {
   variant: string;
   sizeMl: number;
   price: number;
+  /** Quick alternative prices shown in the order form (promo, teman, bundling…). */
+  priceOptions: PriceOption[];
   recipeId: string;
   /** How many recipe portions go into one bottle (250 ml = 1, 1 L = 4). */
   recipeScale: number;
@@ -89,6 +98,10 @@ export interface Txn {
   description: string;
   qtyNote: string;
   amount: number;
+  /** Optional: the ingredient this purchase restocked. */
+  ingredientId?: string;
+  /** Amount received, in the ingredient's unit. */
+  ingredientQty?: number;
   createdAt: string;
 }
 
@@ -102,6 +115,21 @@ export interface Task {
   tag: string;
   due: string;
   status: TaskStatus;
+  createdAt: string;
+}
+
+export interface Campaign {
+  id: string;
+  name: string;
+  /** Product the campaign sells (sales are counted from orders of this product in the period). */
+  productId: string;
+  start: string;
+  end: string;
+  promoPrice: number;
+  /** Fixed campaign costs: ads, sampling, giveaway, endorse… */
+  budget: number;
+  targetBottles: number;
+  notes: string;
   createdAt: string;
 }
 
@@ -124,4 +152,5 @@ export interface AppData {
   orders: Order[];
   txns: Txn[];
   tasks: Task[];
+  campaigns: Campaign[];
 }

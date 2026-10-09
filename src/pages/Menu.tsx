@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useStore } from '../store';
-import type { Ingredient, Product, Recipe, Unit } from '../types';
-import { ingredientMap, productBOM, productCost, unitCost } from '../lib/calc';
+import type { Ingredient, PriceOption, Product, Recipe, Unit } from '../types';
+import { ingredientMap, isLow, productBOM, productCost, unitCost } from '../lib/calc';
 import { formatNum, formatRp, pct, uid } from '../lib/format';
 import { Field, MoneyInput, Seg, Switch } from '../components/UI';
 import { IconPlus, IconTrash } from '../components/Icons';
@@ -9,7 +9,7 @@ import { IconPlus, IconTrash } from '../components/Icons';
 type Tab = 'products' | 'recipes' | 'ingredients';
 
 export function MenuPage() {
-  const [tab, setTab] = useState<Tab>('products');
+  const [tab, setTab] = useState<Tab>(() => (window.location.hash.match(/[?&]tab=(\w+)/)?.[1] as Tab) || 'products');
   return (
     <div className="stack">
       <Seg
@@ -48,6 +48,7 @@ function Products() {
         price: 21000,
         recipeId: d.recipes[0]?.id ?? '',
         recipeScale: 1,
+        priceOptions: [],
         packaging: [
           { ingredientId: 'bottle-250', qty: 1 },
           { ingredientId: 'sticker', qty: 1 },
@@ -136,6 +137,7 @@ function Products() {
                   </select>
                 </Field>
               </div>
+              <PriceOptions product={p} cost={cost} onChange={(priceOptions) => patch(p.id, { priceOptions })} />
               <div className="total-box section-gap">
                 <div>
                   <div className="small muted">HPP {formatRp(cost)}</div>
@@ -162,6 +164,35 @@ function Products() {
         <IconPlus /> Add product
       </button>
     </>
+  );
+}
+
+function PriceOptions({ product, cost, onChange }: { product: Product; cost: number; onChange: (o: PriceOption[]) => void }) {
+  const opts = product.priceOptions;
+  const set = (i: number, patch: Partial<PriceOption>) => onChange(opts.map((o, j) => (j === i ? { ...o, ...patch } : o)));
+  return (
+    <div className="section-gap stack" style={{ gap: 8 }}>
+      <div className="row between">
+        <span className="small bold ink2">Other prices (promo, teman, bundling…)</span>
+        <button className="btn sm ghost" onClick={() => onChange([...opts, { label: 'Promo', price: product.price }])}>
+          <IconPlus /> Price
+        </button>
+      </div>
+      {opts.map((o, i) => (
+        <div className="row" key={i} style={{ gap: 8 }}>
+          <input className="input" value={o.label} onChange={(e) => set(i, { label: e.target.value })} style={{ flex: 1, minWidth: 0 }} aria-label="Label" />
+          <div style={{ width: 130, flex: 'none' }}>
+            <MoneyInput value={o.price} onChange={(v) => set(i, { price: v })} />
+          </div>
+          <span className="tiny muted" style={{ width: 64, flex: 'none' }}>
+            margin {pct(o.price ? (o.price - cost) / o.price : 0)}
+          </span>
+          <button className="btn sm ghost icon" aria-label="Remove price" onClick={() => onChange(opts.filter((_, j) => j !== i))}>
+            <IconTrash />
+          </button>
+        </div>
+      ))}
+    </div>
   );
 }
 
@@ -279,7 +310,7 @@ function Ingredients() {
     });
   const add = () =>
     update((d) => {
-      d.ingredients.push({ id: uid('i-'), name: 'New ingredient', unit: 'g', packSize: 1, packPrice: 0, stock: null });
+      d.ingredients.push({ id: uid('i-'), name: 'New ingredient', unit: 'g', packSize: 1, packPrice: 0, stock: null, lowAt: null });
       return d;
     });
   const used = (id: string) => data.recipes.some((r) => r.lines.some((l) => l.ingredientId === id)) || data.products.some((p) => p.packaging.some((l) => l.ingredientId === id));
@@ -293,7 +324,7 @@ function Ingredients() {
       <div className="card-head">
         <div>
           <h2>Ingredients & packaging</h2>
-          <div className="sub">Price per pack → cost per gram/pcs → HPP. Leave stock empty if you don't want to track it.</div>
+          <div className="sub">Price per pack → cost per gram/pcs → HPP. Update stock yourself whenever you check the shelf — nothing is subtracted automatically. Set “Warn at” to get a low-stock warning on the dashboard.</div>
         </div>
         <button className="btn sm" onClick={add}>
           <IconPlus /> Add
@@ -336,9 +367,24 @@ function Ingredients() {
                 onChange={(e) => patch(i.id, { stock: e.target.value === '' ? null : Number(e.target.value.replace(',', '.')) || 0 })}
               />
             </Field>
+            <Field label="Warn at">
+              <input
+                className="input num"
+                inputMode="decimal"
+                style={{ width: 90 }}
+                placeholder="—"
+                value={i.lowAt ?? ''}
+                onChange={(e) => patch(i.id, { lowAt: e.target.value === '' ? null : Number(e.target.value.replace(',', '.')) || 0 })}
+              />
+            </Field>
             <div style={{ minWidth: 110, paddingBottom: 10 }} className="small">
               <b className="num">Rp{formatNum(unitCost(i))}</b>
               <span className="muted"> / {i.unit}</span>
+              {isLow(i) && (
+                <div>
+                  <span className="chip rose">Stok menipis</span>
+                </div>
+              )}
             </div>
             <button className="btn sm ghost icon" style={{ marginBottom: 4 }} aria-label="Delete" onClick={() => remove(i)}>
               <IconTrash />

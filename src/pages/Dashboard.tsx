@@ -6,6 +6,7 @@ import {
   customers,
   financeSummary,
   isActive,
+  isLow,
   isRevenue,
   orderBottles,
   orderTotal,
@@ -60,6 +61,7 @@ export function Dashboard() {
     .slice(0, 6);
   const late = data.orders.filter((o) => o.date < today && ['new', 'brewing', 'ready'].includes(o.status));
   const unpaid = data.orders.filter((o) => !o.paid && isActive(o));
+  const lowStock = data.ingredients.filter(isLow);
   const top = customers(data).filter((c) => c.name !== 'Walk-in').slice(0, 5);
   const aov = period.salesRevenue / Math.max(1, periodOrders.length);
   const margin = period.salesRevenue ? period.grossProfit / period.salesRevenue : 0;
@@ -110,6 +112,18 @@ export function Dashboard() {
           )}
           <a className="btn sm" href={href('orders')} style={{ marginLeft: 'auto' }}>
             Review <IconArrowR />
+          </a>
+        </div>
+      )}
+
+      {lowStock.length > 0 && (
+        <div className="card row wrap" style={{ gap: 12, borderColor: 'color-mix(in srgb, var(--warn) 45%, var(--border))' }}>
+          <IconAlert width={20} height={20} style={{ color: 'var(--warn)' }} />
+          <span>
+            <b>Stok menipis:</b> {lowStock.map((i) => `${i.name} (${formatNum(i.stock ?? 0)} ${i.unit})`).join(', ')}
+          </span>
+          <a className="btn sm" href={`${href('menu')}?tab=ingredients`} style={{ marginLeft: 'auto' }}>
+            Update stock <IconArrowR />
           </a>
         </div>
       )}

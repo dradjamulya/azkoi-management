@@ -8,6 +8,15 @@ import { WEEKDAYS, todayISO } from '../lib/format';
 import { Field, Seg, Switch } from '../components/UI';
 import { IconCloud, IconDownload, IconUpload } from '../components/Icons';
 
+const SETUP_SQL = `create table azkoi_state (
+  id text primary key,
+  data jsonb not null,
+  updated_at timestamptz not null default now()
+);
+alter table azkoi_state enable row level security;
+create policy "workspace access" on azkoi_state
+  for all using (true) with check (true);`;
+
 export function SettingsPage() {
   const { data, update, replace, sync, syncConfig, setSyncConfig, toast } = useStore();
   const { theme, setTheme } = useUI();
@@ -142,6 +151,40 @@ export function SettingsPage() {
             </div>
           </div>
         </div>
+        <details className="table-view" style={{ marginTop: 0, marginBottom: 14 }}>
+          <summary>How to set it up (±5 minutes, free)</summary>
+          <ol className="small ink2" style={{ paddingLeft: 18, display: 'grid', gap: 6 }}>
+            <li>
+              Sign up at{' '}
+              <a href="https://supabase.com/dashboard" target="_blank" rel="noreferrer">
+                supabase.com
+              </a>{' '}
+              → <b>New project</b> (any name, region Singapore).
+            </li>
+            <li>
+              Open <b>SQL Editor</b>, paste this and press <b>Run</b>:
+              <pre style={{ background: 'var(--surface-2)', padding: 10, borderRadius: 10, overflowX: 'auto', fontSize: 12 }}>{SETUP_SQL}</pre>
+              <button
+                className="btn sm"
+                onClick={async () => {
+                  try {
+                    await navigator.clipboard.writeText(SETUP_SQL);
+                    toast('SQL copied');
+                  } catch {
+                    toast('Select and copy the text manually');
+                  }
+                }}
+              >
+                Copy SQL
+              </button>
+            </li>
+            <li>
+              <b>Project Settings → API</b>: copy the <b>Project URL</b> and the <b>anon public</b> key into the fields below.
+            </li>
+            <li>Tap “Generate” for a workspace code, then <b>Upload this device</b>.</li>
+            <li>On your phone / iPad: open the site, paste the same 3 values, tap <b>Pull from cloud</b>. Done — everything syncs.</li>
+          </ol>
+        </details>
         <div className="form-grid">
           <Field label="Supabase project URL" className="full">
             <input className="input" placeholder="https://xxxx.supabase.co" value={cfg.url} onChange={(e) => setCfg({ ...cfg, url: e.target.value.trim() })} />
@@ -150,7 +193,16 @@ export function SettingsPage() {
             <input className="input" placeholder="eyJhbGciOi…" value={cfg.anonKey} onChange={(e) => setCfg({ ...cfg, anonKey: e.target.value.trim() })} />
           </Field>
           <Field label="Workspace code (same on every device — make it hard to guess)" className="full">
-            <input className="input" placeholder="azkoi-xxxx-xxxx" value={cfg.workspace} onChange={(e) => setCfg({ ...cfg, workspace: e.target.value.trim() })} />
+            <div className="row" style={{ gap: 8 }}>
+              <input className="input" placeholder="azkoi-xxxx-xxxx" value={cfg.workspace} onChange={(e) => setCfg({ ...cfg, workspace: e.target.value.trim() })} />
+              <button
+                className="btn"
+                type="button"
+                onClick={() => setCfg({ ...cfg, workspace: `azkoi-${crypto.getRandomValues(new Uint32Array(3)).reduce((a, n) => a + n.toString(36), '')}` })}
+              >
+                Generate
+              </button>
+            </div>
           </Field>
         </div>
         <div className="row wrap section-gap">

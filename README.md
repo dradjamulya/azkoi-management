@@ -8,9 +8,10 @@ Works on phone, iPad and laptop, and can be added to the home screen like an app
 | **Dashboard** | Break-even tracker ("R&D left"), today's and tomorrow's brew, revenue charts, best days, top customers |
 | **Orders** | Trello-style board: *Order masuk → Lagi diseduh → Siap → Selesai*. Drag cards (hold on touch) or tap →. Paid / unpaid toggle, WhatsApp confirmation, list view, CSV export |
 | **Brew plan** | Bottles to make for any date + extra walk-in stock, total ingredients (gram), HPP, step-by-step checklist, copy summary for WhatsApp |
-| **Finance** | Total spent vs cash in, cash-flow per month, spending by category, unit economics (price vs HPP), ledger for purchases & other income |
+| **Finance** | Total spent vs cash in, cash-flow per month, spending by category, unit economics (price vs HPP), ledger. A purchase can be linked to an ingredient → adds to stock and updates the HPP price |
+| **Price Lab** | Simulate a new size / bottle / sticker (e.g. 100 ml): HPP, margin, suggested price, compare per 100 ml, save as product. Plan campaigns with promo price + budget and track sales vs cost |
 | **Customers** | Built from orders: repeat buyers, total spent, favourite drink, WhatsApp button |
-| **Menu & HPP** | Products & prices, recipes per 250 ml, ingredient pack prices and optional stock |
+| **Menu & HPP** | Products, normal + promo prices (e.g. teman Rp19.000), recipes per 250 ml, ingredient prices, manual stock with low-stock warning |
 | **Tasks** | To-do board for content, restock, R&D experiments |
 | **Settings** | Open days, WhatsApp message template, theme, cloud sync, backup / restore |
 

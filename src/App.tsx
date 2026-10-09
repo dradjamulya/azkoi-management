@@ -12,6 +12,7 @@ import {
   IconMore,
   IconPlus,
   IconSettings,
+  IconTag,
   IconUsers,
   IconWallet,
 } from './components/Icons';
@@ -20,13 +21,14 @@ import { Orders } from './pages/Orders';
 import { Brew } from './pages/Brew';
 import { Finance } from './pages/Finance';
 import { Customers } from './pages/Customers';
+import { Lab } from './pages/Lab';
 import { MenuPage } from './pages/Menu';
 import { Tasks } from './pages/Tasks';
 import { SettingsPage } from './pages/Settings';
 import { More } from './pages/More';
 import { todayISO } from './lib/format';
 
-type Route = 'home' | 'orders' | 'brew' | 'finance' | 'customers' | 'menu' | 'tasks' | 'settings' | 'more';
+type Route = 'home' | 'orders' | 'brew' | 'finance' | 'lab' | 'customers' | 'menu' | 'tasks' | 'settings' | 'more';
 
 interface NavItem {
   route: Route;
@@ -40,6 +42,7 @@ export const NAV: NavItem[] = [
   { route: 'orders', label: 'Orders', title: 'Orders', icon: IconBoard },
   { route: 'brew', label: 'Brew', title: 'Brew plan', icon: IconCup },
   { route: 'finance', label: 'Finance', title: 'Finance', icon: IconWallet },
+  { route: 'lab', label: 'Price Lab', title: 'Price Lab & campaigns', icon: IconTag },
   { route: 'customers', label: 'Customers', title: 'Customers', icon: IconUsers },
   { route: 'menu', label: 'Menu & HPP', title: 'Menu, recipes & HPP', icon: IconBook },
   { route: 'tasks', label: 'Tasks', title: 'Tasks', icon: IconChecklist },
@@ -114,6 +117,7 @@ export default function App() {
     case 'orders': page = <Orders />; break;
     case 'brew': page = <Brew />; break;
     case 'finance': page = <Finance />; break;
+    case 'lab': page = <Lab />; break;
     case 'customers': page = <Customers />; break;
     case 'menu': page = <MenuPage />; break;
     case 'tasks': page = <Tasks />; break;

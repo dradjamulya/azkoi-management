@@ -1,10 +1,10 @@
 import { useMemo, useState } from 'react';
 import { useStore } from '../store';
 import { EXPENSE_CATEGORIES, INCOME_CATEGORIES, type Txn } from '../types';
-import { cashflowByMonth, financeSummary, nextId, productCost } from '../lib/calc';
+import { cashflowByMonth, financeSummary, nextId, productCost, unitCost } from '../lib/calc';
 import { formatDate, formatMonth, formatNum, formatRp, formatRpShort, monthKey, pct, todayISO } from '../lib/format';
 import { ColumnChart, HBarList, Legend, Meter, TableView, type Series } from '../components/Charts';
-import { Empty, Field, Modal, MoneyInput, Seg } from '../components/UI';
+import { Empty, Field, Modal, MoneyInput, Seg, Switch } from '../components/UI';
 import { IconPlus, IconSearch, IconTrash } from '../components/Icons';
 
 const CASH_SERIES: Series[] = [
@@ -247,16 +247,30 @@ function TxnForm({ txn, defaultType, onClose }: { txn?: Txn; defaultType: 'incom
   const set = <K extends keyof Txn>(k: K, v: Txn[K]) => setT((p) => ({ ...p, [k]: v }));
   const cats: readonly string[] = t.type === 'income' ? INCOME_CATEGORIES : EXPENSE_CATEGORIES;
   const valid = t.description.trim() && t.amount > 0 && t.date;
+  const [addStock, setAddStock] = useState(true);
+  const [updatePrice, setUpdatePrice] = useState(true);
+  const ing = data.ingredients.find((i) => i.id === t.ingredientId);
+  const linkable = t.type === 'expense' && !txn;
+  const qty = t.ingredientQty ?? 0;
 
   const save = () => {
     if (!valid) return;
+    const restock = linkable && ing && qty > 0;
     update((d) => {
       const i = d.txns.findIndex((x) => x.id === t.id);
       if (i >= 0) d.txns[i] = t;
       else d.txns.push({ ...t, id: nextId('TX', d.txns.map((x) => x.id)) });
+      const target = restock ? d.ingredients.find((x) => x.id === ing.id) : undefined;
+      if (target) {
+        if (addStock) target.stock = (target.stock ?? 0) + qty;
+        if (updatePrice) {
+          target.packSize = qty;
+          target.packPrice = t.amount;
+        }
+      }
       return d;
     });
-    toast('Saved');
+    toast(restock && (addStock || updatePrice) ? `Saved · ${ing.name} updated` : 'Saved');
     onClose();
   };
   const remove = () => {
@@ -317,6 +331,64 @@ function TxnForm({ txn, defaultType, onClose }: { txn?: Txn; defaultType: 'incom
           <input className="input" type="date" value={t.date} onChange={(e) => set('date', e.target.value)} />
         </Field>
       </div>
+      {linkable && (
+        <div className="card section-gap" style={{ background: 'var(--surface-2)', boxShadow: 'none' }}>
+          <div className="small bold" style={{ marginBottom: 8 }}>Restock an ingredient? (optional)</div>
+          <div className="form-grid">
+            <Field label="Ingredient / packaging">
+              <select
+                className="input"
+                value={t.ingredientId ?? ''}
+                onChange={(e) => {
+                  const picked = data.ingredients.find((i) => i.id === e.target.value);
+                  setT((p) => ({
+                    ...p,
+                    ingredientId: e.target.value || undefined,
+                    description: p.description || (picked ? `Stok ${picked.name}` : ''),
+                    category: picked ? (picked.unit === 'pcs' ? 'Packaging' : 'Ingredients') : p.category,
+                  }));
+                }}
+              >
+                <option value="">— not a restock —</option>
+                {data.ingredients.map((i) => (
+                  <option key={i.id} value={i.id}>
+                    {i.name}
+                  </option>
+                ))}
+              </select>
+            </Field>
+            {ing && (
+              <Field label={`Amount received (${ing.unit})`}>
+                <input
+                  className="input num"
+                  inputMode="decimal"
+                  placeholder={ing.unit === 'pcs' ? '50' : '500'}
+                  value={t.ingredientQty ?? ''}
+                  onChange={(e) => set('ingredientQty', Number(e.target.value.replace(',', '.')) || undefined)}
+                />
+              </Field>
+            )}
+          </div>
+          {ing && qty > 0 && (
+            <div className="stack section-gap" style={{ gap: 10 }}>
+              <Switch
+                checked={addStock}
+                onChange={setAddStock}
+                label={<span className="small">Add to stock ({formatNum(ing.stock ?? 0)} → {formatNum((ing.stock ?? 0) + qty)} {ing.unit})</span>}
+              />
+              <Switch
+                checked={updatePrice}
+                onChange={setUpdatePrice}
+                label={
+                  <span className="small">
+                    Use this price for HPP (Rp{formatNum(unitCost(ing))} → Rp{formatNum(t.amount / qty)} per {ing.unit})
+                  </span>
+                }
+              />
+            </div>
+          )}
+        </div>
+      )}
       {t.date && <div className="tiny muted section-gap">Counts in {formatMonth(monthKey(t.date), true)}.</div>}
     </Modal>
   );

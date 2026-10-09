@@ -5,12 +5,24 @@ import { pullRemote, pushRemote, loadSyncConfig, type SyncConfig, type SyncState
 
 const STORAGE_KEY = 'azkoi-hub-data-v1';
 
+/** Fill in fields added after a backup / older version was saved. */
+export function normalize(d: AppData): AppData {
+  return {
+    ...d,
+    ingredients: d.ingredients.map((i) => ({ ...i, lowAt: i.lowAt ?? null })),
+    products: d.products.map((p) => ({ ...p, priceOptions: p.priceOptions ?? [] })),
+    campaigns: d.campaigns ?? [],
+    tasks: d.tasks ?? [],
+    txns: d.txns ?? [],
+  };
+}
+
 function readLocal(): AppData {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (raw) {
       const parsed = JSON.parse(raw) as AppData;
-      if (parsed && parsed.version === 1 && Array.isArray(parsed.orders)) return parsed;
+      if (parsed && parsed.version === 1 && Array.isArray(parsed.orders)) return normalize(parsed);
     }
   } catch {
     /* storage unavailable or corrupt — fall back to seed */
@@ -67,7 +79,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 
   const replace = useCallback((next: AppData) => {
     dirty.current = true;
-    setData({ ...next, updatedAt: new Date().toISOString() });
+    setData({ ...normalize(next), updatedAt: new Date().toISOString() });
   }, []);
 
   useEffect(() => writeLocal(data), [data]);
@@ -79,7 +91,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       const remote = await pullRemote(syncConfig);
       if (remote && remote.updatedAt > data.updatedAt) {
         dirty.current = false;
-        setData(remote);
+        setData(normalize(remote));
         setSync({ status: 'ok', message: `Pulled latest · ${new Date().toLocaleTimeString()}` });
         return;
       }
